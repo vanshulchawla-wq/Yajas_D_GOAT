@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
+import 'test_screen.dart';
 
 class PastPapersScreen extends StatefulWidget {
   const PastPapersScreen({super.key});
@@ -40,6 +41,18 @@ class _PastPapersScreenState extends State<PastPapersScreen> {
     }
   }
 
+  void _startLiveTest(Map<String, dynamic> paper) {
+    final questions = (paper['questions'] as List?)?.map((q) => Map<String, dynamic>.from(q)).toList() ?? [];
+    if (questions.isEmpty) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => TestScreen(
+      questions: questions,
+      title: '${paper['subject']} ${paper['year']}',
+      subject: paper['subject'] ?? '',
+      chapter: 'Board Paper ${paper['year']}',
+      difficulty: 'medium',
+    )));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,25 +80,35 @@ class _PastPapersScreenState extends State<PastPapersScreen> {
           itemBuilder: (_, i) {
             final p = _papers[i];
             final isMS = p['type'] == 'Marking Scheme';
-            return GestureDetector(
-              onTap: () => _openPdf(p['url'] ?? ''),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: isMS ? Colors.green.withOpacity(0.3) : const Color(0xFF1565C0).withOpacity(0.3))),
-                child: Row(children: [
-                  Container(width: 40, height: 40, decoration: BoxDecoration(
-                    color: isMS ? Colors.green.withOpacity(0.1) : const Color(0xFF1565C0).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10)),
-                    child: Icon(isMS ? Icons.check_circle_outline : Icons.description, color: isMS ? Colors.green : const Color(0xFF1565C0), size: 20)),
-                  const SizedBox(width: 12),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('${p['subject']} - ${p['year']}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
-                    Text('${p['type']} • ${p['filename'] ?? ''}', style: GoogleFonts.poppins(fontSize: 10, color: Colors.black45)),
-                  ])),
-                  const Icon(Icons.open_in_new, size: 18, color: Colors.black38),
-                ]),
-              ),
+            final hasLiveTest = p['has_live_test'] == true;
+            final mcqCount = p['mcq_count'] ?? 0;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: hasLiveTest ? Colors.green.withOpacity(0.4) : isMS ? Colors.orange.withOpacity(0.3) : const Color(0xFF1565C0).withOpacity(0.3))),
+              child: Row(children: [
+                Container(width: 44, height: 44, decoration: BoxDecoration(
+                  color: hasLiveTest ? Colors.green.withOpacity(0.1) : isMS ? Colors.orange.withOpacity(0.1) : const Color(0xFF1565C0).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10)),
+                  child: Icon(hasLiveTest ? Icons.quiz : isMS ? Icons.check_circle_outline : Icons.picture_as_pdf,
+                    color: hasLiveTest ? Colors.green : isMS ? Colors.orange : const Color(0xFF1565C0), size: 22)),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('${p['subject']} - ${p['year']}', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                  Text(hasLiveTest ? '$mcqCount MCQs • Live Test' : '${p['type']} • PDF',
+                    style: GoogleFonts.poppins(fontSize: 10, color: hasLiveTest ? Colors.green : Colors.black45)),
+                ])),
+                if (hasLiveTest)
+                  ElevatedButton(
+                    onPressed: () => _startLiveTest(p),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), minimumSize: Size.zero,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    child: Text('Take Test', style: GoogleFonts.poppins(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
+                  )
+                else
+                  IconButton(icon: const Icon(Icons.open_in_new, size: 18, color: Colors.black38), onPressed: () => _openPdf(p['url'] ?? '')),
+              ]),
             );
           },
         )),
