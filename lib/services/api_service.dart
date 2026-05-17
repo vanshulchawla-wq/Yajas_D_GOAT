@@ -7,19 +7,23 @@ class ApiService {
   static const userId = 'default';
 
   static Future<List<Map<String, dynamic>>> getSubjects() async {
-    final res = await http.get(Uri.parse('$baseUrl/subjects')).timeout(const Duration(seconds: 10));
-    if (res.statusCode == 200) return List<Map<String, dynamic>>.from(jsonDecode(res.body));
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/subjects')).timeout(const Duration(seconds: 30));
+      if (res.statusCode == 200) return List<Map<String, dynamic>>.from(jsonDecode(res.body));
+    } catch (_) {}
     return [];
   }
 
   static Future<List<Question>> getQuestions({required String subject, required String chapter, String? difficulty, int limit = 10}) async {
-    var url = '$baseUrl/questions/$subject/$chapter?limit=$limit&user_id=$userId';
-    if (difficulty != null) url += '&difficulty=$difficulty';
-    final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
-    if (res.statusCode == 200) {
-      final list = jsonDecode(res.body) as List;
-      return list.map((j) => Question.fromJson(j)).toList();
-    }
+    try {
+      var url = '$baseUrl/questions/$subject/$chapter?limit=$limit&user_id=$userId';
+      if (difficulty != null) url += '&difficulty=$difficulty';
+      final res = await http.get(Uri.parse(Uri.encodeFull(url))).timeout(const Duration(seconds: 30));
+      if (res.statusCode == 200) {
+        final list = jsonDecode(res.body) as List;
+        return list.map((j) => Question.fromJson(j)).toList();
+      }
+    } catch (_) {}
     return [];
   }
 
@@ -39,8 +43,10 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> getStats() async {
-    final res = await http.get(Uri.parse('$baseUrl/stats/$userId')).timeout(const Duration(seconds: 10));
-    if (res.statusCode == 200) return jsonDecode(res.body);
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/stats/$userId')).timeout(const Duration(seconds: 30));
+      if (res.statusCode == 200) return jsonDecode(res.body);
+    } catch (_) {}
     return {};
   }
 

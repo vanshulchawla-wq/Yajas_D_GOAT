@@ -24,13 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    try {
-      final subjects = await ApiService.getSubjects();
-      final stats = await ApiService.getStats();
-      if (mounted) setState(() { _subjects = subjects; _stats = stats; _loading = false; });
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
-    }
+    final subjects = await ApiService.getSubjects();
+    final stats = await ApiService.getStats();
+    if (mounted) setState(() { _subjects = subjects; _stats = stats; _loading = false; });
   }
 
   @override
