@@ -387,3 +387,26 @@ def get_monthly_test(user_id: str = "default"):
     get_db()["monthly_tests"].insert_one(monthly)
     monthly.pop("_id", None)
     return monthly
+
+
+@app.get("/cbse-papers")
+def get_cbse_papers(subject: Optional[str] = None, year: Optional[str] = None, paper_type: Optional[str] = None):
+    """Get CBSE official sample papers (PDF links) scraped from cbseacademic.nic.in."""
+    query = {}
+    if subject:
+        query["subject"] = subject
+    if year:
+        query["year"] = year
+    if paper_type:
+        query["type"] = paper_type
+    papers = list(get_db()["cbse_papers"].find(query, {"_id": 0}).sort("year", -1))
+    return papers
+
+
+@app.get("/cbse-papers/filters")
+def get_cbse_paper_filters():
+    """Get available years and subjects for CBSE papers."""
+    papers = list(get_db()["cbse_papers"].find({}, {"_id": 0, "year": 1, "subject": 1, "type": 1}))
+    years = sorted(set(p["year"] for p in papers), reverse=True)
+    subjects = sorted(set(p["subject"] for p in papers))
+    return {"years": years, "subjects": subjects}

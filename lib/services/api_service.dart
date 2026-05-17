@@ -99,4 +99,23 @@ class ApiService {
     } catch (_) {}
     return [];
   }
+
+  static Future<List<Map<String, dynamic>>> getCbsePapers({String? subject, String? year}) async {
+    try {
+      var url = '$baseUrl/cbse-papers?';
+      if (subject != null) url += 'subject=$subject&';
+      if (year != null) url += 'year=$year&';
+      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
+      if (res.statusCode == 200) return List<Map<String, dynamic>>.from(jsonDecode(res.body));
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> getCbsePaperFilters() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/cbse-papers/filters')).timeout(const Duration(seconds: 30));
+      if (res.statusCode == 200) return jsonDecode(res.body);
+    } catch (_) {}
+    return {'years': [], 'subjects': []};
+  }
 }
