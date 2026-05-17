@@ -1,0 +1,71 @@
+import hashlib
+from pymongo import MongoClient
+
+c = MongoClient('mongodb+srv://elda:eldaonboard.streamlit.app@elda.wzcx5kq.mongodb.net/?appName=Elda')
+col = c['ycexamprep']['questions']
+
+def add_batch(questions, label):
+    for q in questions:
+        q['id'] = hashlib.md5(q['text'].encode()).hexdigest()[:12]
+        col.update_one({'id': q['id']}, {'$set': q}, upsert=True)
+    print(f"  + {len(questions)} ({label}). DB total: {col.count_documents({})}")
+
+print("\n[SCIENCE] Batch 1...")
+add_batch([
+{"subject":"Science","chapter":"Chemical Reactions and Equations","difficulty":"medium","text":"What happens when dilute hydrochloric acid is added to iron filings?","options":["Hydrogen gas and iron chloride produced","Chlorine gas produced","No reaction","Iron oxide formed"],"correctIndex":0},
+{"subject":"Science","chapter":"Chemical Reactions and Equations","difficulty":"hard","text":"A shiny brown coloured element X on heating in air becomes black. Name element X and the black compound formed:","options":["Copper, Copper oxide","Iron, Iron oxide","Silver, Silver oxide","Gold, Gold oxide"],"correctIndex":0},
+{"subject":"Science","chapter":"Chemical Reactions and Equations","difficulty":"medium","text":"Oil and fat containing food items are flushed with nitrogen because:","options":["Nitrogen prevents oxidation","Nitrogen adds flavour","Nitrogen is cheap","Nitrogen preserves colour"],"correctIndex":0},
+{"subject":"Science","chapter":"Acids Bases and Salts","difficulty":"hard","text":"Equal lengths of magnesium ribbons are taken in test tubes A and B. HCl is added to A and acetic acid to B. Amount and rate of H2 gas evolved is:","options":["More in A, faster in A","More in B, faster in B","Equal in both","More in A, same rate"],"correctIndex":0},
+{"subject":"Science","chapter":"Acids Bases and Salts","difficulty":"medium","text":"What is the common name of CaOCl2?","options":["Bleaching powder","Baking powder","Washing soda","Plaster of Paris"],"correctIndex":0},
+{"subject":"Science","chapter":"Metals and Non-metals","difficulty":"hard","text":"An element A burns with golden flame in air. It reacts with another element B (atomic number 17) to give product C. C is soluble in water. Identify A, B and C:","options":["Na, Cl, NaCl","K, Cl, KCl","Ca, Cl, CaCl2","Mg, Cl, MgCl2"],"correctIndex":0},
+{"subject":"Science","chapter":"Metals and Non-metals","difficulty":"medium","text":"Which of the following pairs will give displacement reactions?","options":["FeSO4 + Zn","CuSO4 + Fe","Both A and B","ZnSO4 + Cu"],"correctIndex":2},
+{"subject":"Science","chapter":"Carbon and its Compounds","difficulty":"medium","text":"Ethanol on heating with excess conc. H2SO4 at 443K gives:","options":["Ethene","Ethane","Ethanal","Ethanoic acid"],"correctIndex":0},
+{"subject":"Science","chapter":"Carbon and its Compounds","difficulty":"hard","text":"A compound C (molecular formula C2H4O2) reacts with Na to form a gas and compound D. On treatment with NaOH, C gives compound E. Identify C, D and E:","options":["Ethanoic acid, Sodium ethanoate, Sodium ethanoate","Ethanol, Sodium ethoxide, Ethene","Methanal, Sodium, Methanol","None"],"correctIndex":0},
+{"subject":"Science","chapter":"Life Processes","difficulty":"hard","text":"Why is it necessary to separate oxygenated and deoxygenated blood in mammals and birds?","options":["To maintain body temperature for energy-intensive processes","To reduce heart rate","To increase blood volume","To prevent infections"],"correctIndex":0},
+{"subject":"Science","chapter":"Life Processes","difficulty":"medium","text":"The inner lining of small intestine has numerous finger-like projections called villi which:","options":["Increase surface area for absorption","Secrete enzymes","Produce bile","Store food"],"correctIndex":0},
+{"subject":"Science","chapter":"Life Processes","difficulty":"medium","text":"In single circulation, blood goes through the heart:","options":["Once in one complete cycle","Twice in one complete cycle","Three times","Does not pass through heart"],"correctIndex":0},
+{"subject":"Science","chapter":"Control and Coordination","difficulty":"hard","text":"What is the difference between the manner in which movement takes place in a sensitive plant and movement in our legs?","options":["Plant movement is nastic/chemical, leg movement is voluntary/nervous","Both are same","Plant uses muscles","Leg movement is chemical"],"correctIndex":0},
+{"subject":"Science","chapter":"Control and Coordination","difficulty":"medium","text":"Iodine is necessary for the synthesis of which hormone?","options":["Thyroxine","Adrenaline","Insulin","Growth hormone"],"correctIndex":0},
+{"subject":"Science","chapter":"Heredity and Evolution","difficulty":"hard","text":"How is the sex of the child determined in human beings?","options":["By the chromosome from father (X or Y)","By the chromosome from mother","By environmental factors","By nutrition during pregnancy"],"correctIndex":0},
+{"subject":"Science","chapter":"Heredity and Evolution","difficulty":"medium","text":"Mendel crossed tall pea plants with dwarf ones. In F1, all were tall. The ratio in F2 was:","options":["3:1","1:1","2:1","1:3"],"correctIndex":0},
+{"subject":"Science","chapter":"Light","difficulty":"hard","text":"An object 5 cm high is placed at 25 cm from a converging lens of focal length 10 cm. Find position, size and nature of image:","options":["v=16.67cm, inverted, real, 3.3cm","v=50cm, erect, virtual, 10cm","v=20cm, inverted, real, 4cm","v=15cm, inverted, real, 3cm"],"correctIndex":0},
+{"subject":"Science","chapter":"Light","difficulty":"medium","text":"A concave lens always forms:","options":["Virtual, erect, diminished image","Real, inverted image","Magnified virtual image","No image"],"correctIndex":0},
+{"subject":"Science","chapter":"Light","difficulty":"medium","text":"The phenomenon of splitting of white light into seven colours is called:","options":["Dispersion","Refraction","Reflection","Diffraction"],"correctIndex":0},
+{"subject":"Science","chapter":"Electricity","difficulty":"hard","text":"How is a voltmeter connected in a circuit to measure potential difference?","options":["In parallel","In series","Either way","Not connected to circuit"],"correctIndex":0},
+{"subject":"Science","chapter":"Electricity","difficulty":"medium","text":"What is the maximum resistance which can be made using five resistors each of 1/5 ohm?","options":["1 ohm","5 ohm","1/5 ohm","1/25 ohm"],"correctIndex":0},
+{"subject":"Science","chapter":"Magnetic Effects","difficulty":"medium","text":"At the time of short circuit, the current in the circuit:","options":["Increases heavily","Reduces substantially","Does not change","Varies continuously"],"correctIndex":0},
+{"subject":"Science","chapter":"Magnetic Effects","difficulty":"hard","text":"A coil of insulated copper wire is connected to a galvanometer. What happens when a bar magnet is pushed into the coil?","options":["Galvanometer shows deflection","Nothing happens","Coil gets magnetized permanently","Current flows continuously"],"correctIndex":0},
+{"subject":"Science","chapter":"Our Environment","difficulty":"medium","text":"Which of the following constitute a food chain?","options":["Grass→Deer→Lion","Grass→Lion→Deer","Lion→Grass→Deer","Deer→Grass→Lion"],"correctIndex":0},
+{"subject":"Science","chapter":"Our Environment","difficulty":"hard","text":"Why are some substances non-biodegradable?","options":["Microorganisms lack enzymes to break them down","They are too small","They dissolve in water","They evaporate quickly"],"correctIndex":0},
+], "Science Batch 1")
+
+print("\n[SCIENCE] Batch 2...")
+add_batch([
+{"subject":"Science","chapter":"Chemical Reactions and Equations","difficulty":"medium","text":"Silver articles become black after some time when exposed to air because:","options":["Silver sulphide forms","Silver oxide forms","Silver chloride forms","Silver rusts"],"correctIndex":0},
+{"subject":"Science","chapter":"Acids Bases and Salts","difficulty":"medium","text":"Tooth decay starts when pH of mouth is:","options":["Lower than 5.5","Higher than 7","Exactly 7","Higher than 9"],"correctIndex":0},
+{"subject":"Science","chapter":"Metals and Non-metals","difficulty":"medium","text":"Which gas is produced when dilute HCl reacts with zinc metal?","options":["Hydrogen","Oxygen","Chlorine","Nitrogen"],"correctIndex":0},
+{"subject":"Science","chapter":"Carbon and its Compounds","difficulty":"medium","text":"Soaps are sodium or potassium salts of:","options":["Long chain fatty acids","Mineral acids","Short chain acids","Amino acids"],"correctIndex":0},
+{"subject":"Science","chapter":"Carbon and its Compounds","difficulty":"hard","text":"Why does micelle formation take place when soap is added to water?","options":["Hydrophobic tail avoids water, clusters inward","Soap dissolves completely","Water repels soap","Soap is lighter than water"],"correctIndex":0},
+{"subject":"Science","chapter":"Life Processes","difficulty":"medium","text":"The blood leaving the tissues becomes richer in:","options":["Carbon dioxide","Oxygen","Haemoglobin","Platelets"],"correctIndex":0},
+{"subject":"Science","chapter":"Control and Coordination","difficulty":"medium","text":"Which part of the brain maintains posture and equilibrium?","options":["Cerebellum","Cerebrum","Medulla","Pons"],"correctIndex":0},
+{"subject":"Science","chapter":"Heredity and Evolution","difficulty":"medium","text":"Analogous organs provide evidence for:","options":["Evolution by natural selection","Common ancestry","Genetic drift","Mutation"],"correctIndex":0},
+{"subject":"Science","chapter":"Light","difficulty":"medium","text":"When light enters from air to glass, it bends:","options":["Towards normal","Away from normal","Does not bend","Reflects back"],"correctIndex":0},
+{"subject":"Science","chapter":"Light","difficulty":"hard","text":"Why do stars appear to twinkle?","options":["Atmospheric refraction due to varying density layers","Stars actually blink","Earth rotates","Stars are very far"],"correctIndex":0},
+{"subject":"Science","chapter":"Electricity","difficulty":"medium","text":"Alloys are commonly used in electrical heating devices because:","options":["High resistivity, high melting point","Low resistivity","Good conductors","Cheap"],"correctIndex":0},
+{"subject":"Science","chapter":"Electricity","difficulty":"hard","text":"An electric lamp of 100Ω, a toaster of 50Ω, and a water filter of 500Ω are connected in parallel to 220V. What is the total current?","options":["6.84A","2.2A","4.4A","10A"],"correctIndex":0},
+{"subject":"Science","chapter":"Magnetic Effects","difficulty":"medium","text":"The device used for producing electric current is called:","options":["Generator","Motor","Ammeter","Galvanometer"],"correctIndex":0},
+{"subject":"Science","chapter":"Our Environment","difficulty":"medium","text":"Ozone layer depletion is mainly caused by:","options":["CFCs","CO2","SO2","NO2"],"correctIndex":0},
+{"subject":"Science","chapter":"Heredity and Evolution","difficulty":"hard","text":"A Mendelian experiment consisted of breeding tall pea plants bearing violet flowers with short pea plants bearing white flowers. The progeny all bore violet flowers but almost half were short. Genotype of tall parent:","options":["TtVV","TTVV","Ttvv","TTVv"],"correctIndex":0},
+{"subject":"Science","chapter":"Chemical Reactions and Equations","difficulty":"hard","text":"Why is respiration considered an exothermic reaction?","options":["Energy is released during breakdown of glucose","Energy is absorbed","No energy change","Only heat is produced"],"correctIndex":0},
+{"subject":"Science","chapter":"Acids Bases and Salts","difficulty":"hard","text":"How is the concentration of H3O+ ions affected when a solution of acid is diluted?","options":["Decreases per unit volume","Increases","Remains same","Becomes zero"],"correctIndex":0},
+{"subject":"Science","chapter":"Life Processes","difficulty":"hard","text":"Draw a diagram of human excretory system. Which structure filters blood?","options":["Glomerulus in Bowman's capsule","Collecting duct","Loop of Henle","Ureter"],"correctIndex":0},
+{"subject":"Science","chapter":"Control and Coordination","difficulty":"hard","text":"How does chemical coordination occur in plants? Give example:","options":["Through phytohormones like auxin causing phototropism","Through nerves","Through blood","Through xylem only"],"correctIndex":0},
+{"subject":"Science","chapter":"Light","difficulty":"hard","text":"A student uses a lens of focal length -50cm. What is the power and nature of lens?","options":["-2D, concave","2D, convex","-50D, concave","0.5D, convex"],"correctIndex":0},
+{"subject":"Science","chapter":"Electricity","difficulty":"hard","text":"Why are coils of electric toasters made of an alloy rather than pure metal?","options":["Alloys have higher resistivity and don't oxidize at high temperature","Alloys are cheaper","Pure metals melt easily","Alloys conduct better"],"correctIndex":0},
+{"subject":"Science","chapter":"Magnetic Effects","difficulty":"hard","text":"State the rule to determine direction of force on a current-carrying conductor in a magnetic field:","options":["Fleming's left hand rule","Fleming's right hand rule","Right hand thumb rule","Lenz's law"],"correctIndex":0},
+{"subject":"Science","chapter":"Our Environment","difficulty":"hard","text":"Will the impact of removing all organisms in a trophic level be different for different trophic levels?","options":["Yes, removing producers has maximum impact","No, all levels are equal","Removing top predators has most impact","It depends on season"],"correctIndex":0},
+{"subject":"Science","chapter":"Carbon and its Compounds","difficulty":"medium","text":"The functional group present in CH3CHO is:","options":["Aldehyde (-CHO)","Ketone (-CO-)","Alcohol (-OH)","Carboxylic acid (-COOH)"],"correctIndex":0},
+{"subject":"Science","chapter":"Metals and Non-metals","difficulty":"hard","text":"Why is aluminium used for making cooking utensils?","options":["Good conductor of heat, light, resistant to corrosion","It is the cheapest metal","It is the hardest metal","It has lowest melting point"],"correctIndex":0},
+], "Science Batch 2")
+
+print(f"\n  Science total: {col.count_documents({'subject':'Science'})}")
