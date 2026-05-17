@@ -118,16 +118,26 @@ def add_questions_bulk(req: BulkQuestions):
 
 @app.get("/weekly-test")
 def get_weekly_test(user_id: str = "default"):
-    """Get this week's test. Auto-generates if not exists."""
-    # Week key: year-week
+    """Get this week's test. Only unlocks if previous week was completed."""
     now = datetime.now()
-    week_key = f"{now.year}-W{now.isocalendar()[1]}"
+    current_week = now.isocalendar()[1]
+    week_key = f"{now.year}-W{current_week}"
 
+    # Check if previous week's test was completed
+    prev_week_key = f"{now.year}-W{current_week - 1}" if current_week > 1 else f"{now.year - 1}-W52"
+    prev_test = weekly_col().find_one({"week": prev_week_key})
+    if prev_test:
+        # Check if user submitted result for previous week
+        prev_result = results_col().find_one({"user_id": user_id, "chapter": prev_week_key})
+        if not prev_result:
+            return {"locked": True, "message": "Complete last week's test first!", "pending_week": prev_week_key, "questions": prev_test.get("questions", []), "title": prev_test.get("title", "Previous Week")}
+
+    # Return current week's test
     existing = weekly_col().find_one({"week": week_key}, {"_id": 0})
     if existing:
         return existing
 
-    # Generate: 5 questions per subject, mixed difficulty
+    # Generate: 5 questions per subject, mixed difficulty, 25 total
     subjects = questions_col().distinct("subject")
     test_questions = []
     for subj in subjects:
@@ -136,7 +146,7 @@ def get_weekly_test(user_id: str = "default"):
         test_questions.extend(qs[:5])
 
     random.shuffle(test_questions)
-    weekly = {"week": week_key, "title": f"Weekly Test - Week {now.isocalendar()[1]}", "questions": test_questions, "created": now.isoformat()}
+    weekly = {"week": week_key, "title": f"Weekly Test - Week {current_week}", "questions": test_questions[:25], "created": now.isoformat()}
     weekly_col().insert_one(weekly)
     weekly.pop("_id", None)
     return weekly
@@ -285,3 +295,95 @@ def get_bookmarks(user_id: str):
 def remove_bookmark(user_id: str, question_id: str):
     bookmarks_col().delete_one({"user_id": user_id, "question_id": question_id})
     return {"ok": True}
+
+
+@app.get("/past-papers")
+def get_past_papers(subject: Optional[str] = None, year: Optional[int] = None):
+    """Get past board exam papers. Filter by subject/year."""
+    query = {}
+    if subject:
+        query["subject"] = subject
+    if year:
+        query["year"] = year
+    papers = list(get_db()["past_papers"].find(query, {"_id": 0}).sort("year", -1))
+    return papers
+
+
+@app.get("/past-papers/years")
+def get_past_paper_years():
+    """Get available years and subjects for past papers."""
+    papers = list(get_db()["past_papers"].find({}, {"_id": 0, "year": 1, "subject": 1}))
+    years = sorted(set(p["year"] for p in papers), reverse=True)
+    subjects = sorted(set(p["subject"] for p in papers))
+    return {"years": years, "subjects": subjects}
+
+
+@app.post("/upload-paper")
+async def upload_paper(subject: str = "General", title: str = "Uploaded Paper"):
+    """Save an OCR-extracted paper. Questions sent as JSON body."""
+    # The Flutter app does OCR client-side and sends extracted questions
+    from fastapi import Request
+    # This is called with JSON body containing extracted questions
+    pass
+
+
+class UploadPaperRequest(BaseModel):
+    subject: str = "General"
+    title: str = "Uploaded Paper"
+    questions: list
+    user_id: str = "default"
+
+@app.post("/save-uploaded-paper")
+def save_uploaded_paper(req: UploadPaperRequest):
+    """Save OCR-extracted questions as a custom practice paper."""
+    import hashlib
+    for q in req.questions:
+        q["id"] = hashlib.md5(q.get("text", "").encode()).hexdigest()[:12]
+    paper = {
+        "user_id": req.user_id,
+        "subject": req.subject,
+        "title": req.title,
+        "questions": req.questions,
+        "created": datetime.now().isoformat(),
+        "type": "uploaded",
+    }
+    get_db()["uploaded_papers"].insert_one(paper)
+    # Also add questions to main bank
+    for q in req.questions:
+        q["subject"] = req.subject
+        q["chapter"] = req.title
+        q["difficulty"] = q.get("difficulty", "medium")
+        questions_col().update_one({"id": q["id"]}, {"$set": q}, upsert=True)
+    return {"ok": True, "saved": len(req.questions)}
+
+
+@app.get("/uploaded-papers/{user_id}")
+def get_uploaded_papers(user_id: str):
+    """Get all uploaded papers for a user."""
+    papers = list(get_db()["uploaded_papers"].find({"user_id": user_id}, {"_id": 0}).sort("created", -1))
+    return papers
+
+
+@app.get("/monthly-test")
+def get_monthly_test(user_id: str = "default"):
+    """Get monthly full mock test - 50 questions simulating board pattern."""
+    now = datetime.now()
+    month_key = f"{now.year}-M{now.month}"
+
+    existing = get_db()["monthly_tests"].find_one({"month": month_key}, {"_id": 0})
+    if existing:
+        return existing
+
+    # Generate 50 questions: 10 per subject, mixed difficulty
+    subjects = questions_col().distinct("subject")
+    test_questions = []
+    for subj in subjects:
+        qs = list(questions_col().find({"subject": subj}, {"_id": 0}))
+        random.shuffle(qs)
+        test_questions.extend(qs[:10])
+
+    random.shuffle(test_questions)
+    monthly = {"month": month_key, "title": f"Monthly Mock - {now.strftime('%B %Y')}", "questions": test_questions[:50], "created": now.isoformat(), "duration_mins": 90}
+    get_db()["monthly_tests"].insert_one(monthly)
+    monthly.pop("_id", None)
+    return monthly

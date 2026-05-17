@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:confetti/confetti.dart';
 import '../services/api_service.dart';
 
 class TestScreen extends StatefulWidget {
@@ -19,14 +20,23 @@ class _TestScreenState extends State<TestScreen> {
   Map<String, dynamic>? _result;
   int _elapsed = 0;
   Timer? _timer;
+  late ConfettiController _confetti;
 
   @override
   void initState() {
     super.initState();
+    _confetti = ConfettiController(duration: const Duration(milliseconds: 800));
     _timer = Timer.periodic(const Duration(seconds: 1), (_) { if (!_submitted) setState(() => _elapsed++); });
   }
 
-  void _select(int idx) { if (!_submitted) { HapticFeedback.lightImpact(); setState(() => _answers[_current] = idx); } }
+  void _select(int idx) {
+    if (_submitted || _answers.containsKey(_current)) return;
+    HapticFeedback.lightImpact();
+    setState(() => _answers[_current] = idx);
+    if (idx == widget.questions[_current]['correctIndex']) {
+      _confetti.play();
+    }
+  }
 
   Future<void> _submit() async {
     _timer?.cancel();
@@ -39,13 +49,16 @@ class _TestScreenState extends State<TestScreen> {
   }
 
   @override
-  void dispose() { _timer?.cancel(); super.dispose(); }
+  void dispose() { _timer?.cancel(); _confetti.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
     if (_submitted && _result != null) return _buildResult();
     final q = widget.questions[_current];
     final options = List<String>.from(q['options'] ?? []);
+    final answered = _answers.containsKey(_current);
+    final selectedIdx = _answers[_current];
+    final correctIdx = q['correctIndex'] as int;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
@@ -53,45 +66,77 @@ class _TestScreenState extends State<TestScreen> {
         title: Text(widget.title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
         actions: [Padding(padding: const EdgeInsets.only(right: 16), child: Center(child: Text('⏱ ${_elapsed ~/ 60}:${(_elapsed % 60).toString().padLeft(2, '0')}', style: GoogleFonts.poppins(fontSize: 13, color: Colors.white70))))],
       ),
-      body: Column(children: [
-        LinearProgressIndicator(value: (_current + 1) / widget.questions.length, color: const Color(0xFF1565C0), backgroundColor: const Color(0xFF1565C0).withOpacity(0.1)),
-        Expanded(child: SingleChildScrollView(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: const Color(0xFF1565C0).withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-              child: Text('Q${_current + 1}/${widget.questions.length}', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF1565C0)))),
-            const SizedBox(width: 8),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: _diffColor(q['difficulty']).withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-              child: Text((q['difficulty'] ?? 'medium').toString().toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: _diffColor(q['difficulty'])))),
-          ]),
-          const SizedBox(height: 20),
-          Text(q['text'] ?? '', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, height: 1.4)),
-          const SizedBox(height: 24),
-          ...options.asMap().entries.map((e) {
-            final selected = _answers[_current] == e.key;
-            return GestureDetector(
-              onTap: () => _select(e.key),
-              child: Container(
-                width: double.infinity, margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: selected ? const Color(0xFF1565C0).withOpacity(0.1) : Colors.white, borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: selected ? const Color(0xFF1565C0) : Colors.black12, width: selected ? 2 : 1)),
-                child: Row(children: [
-                  Container(width: 28, height: 28, decoration: BoxDecoration(shape: BoxShape.circle, color: selected ? const Color(0xFF1565C0) : Colors.grey.withOpacity(0.1)),
-                    child: Center(child: Text(String.fromCharCode(65 + e.key), style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: selected ? Colors.white : Colors.black54)))),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(e.value, style: GoogleFonts.poppins(fontSize: 14, color: selected ? const Color(0xFF1565C0) : Colors.black87))),
-                ]),
-              ),
-            );
-          }),
-        ]))),
-        Container(padding: const EdgeInsets.all(16), color: Colors.white, child: Row(children: [
-          if (_current > 0) OutlinedButton(onPressed: () => setState(() => _current--), child: const Text('Previous')),
-          const Spacer(),
-          if (_current < widget.questions.length - 1)
-            ElevatedButton(onPressed: () => setState(() => _current++), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1565C0)), child: const Text('Next', style: TextStyle(color: Colors.white)))
-          else
-            ElevatedButton(onPressed: _submit, style: ElevatedButton.styleFrom(backgroundColor: Colors.green), child: const Text('Submit', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
-        ])),
+      body: Stack(children: [
+        Column(children: [
+          LinearProgressIndicator(value: (_current + 1) / widget.questions.length, color: const Color(0xFF1565C0), backgroundColor: const Color(0xFF1565C0).withOpacity(0.1)),
+          Expanded(child: SingleChildScrollView(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: const Color(0xFF1565C0).withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                child: Text('Q${_current + 1}/${widget.questions.length}', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF1565C0)))),
+              const SizedBox(width: 8),
+              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: _diffColor(q['difficulty']).withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                child: Text((q['difficulty'] ?? 'medium').toString().toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: _diffColor(q['difficulty'])))),
+            ]),
+            const SizedBox(height: 20),
+            Text(q['text'] ?? '', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, height: 1.4)),
+            const SizedBox(height: 24),
+            ...options.asMap().entries.map((e) {
+              final isSelected = selectedIdx == e.key;
+              final isCorrect = e.key == correctIdx;
+              Color bgColor = Colors.white;
+              Color borderColor = Colors.black12;
+              if (answered) {
+                if (isCorrect) { bgColor = Colors.green.withOpacity(0.1); borderColor = Colors.green; }
+                else if (isSelected) { bgColor = Colors.red.withOpacity(0.1); borderColor = Colors.red; }
+              } else if (isSelected) {
+                bgColor = const Color(0xFF1565C0).withOpacity(0.1); borderColor = const Color(0xFF1565C0);
+              }
+              return GestureDetector(
+                onTap: () => _select(e.key),
+                child: Container(
+                  width: double.infinity, margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: borderColor, width: isSelected || (answered && isCorrect) ? 2 : 1)),
+                  child: Row(children: [
+                    Container(width: 28, height: 28, decoration: BoxDecoration(shape: BoxShape.circle,
+                      color: answered && isCorrect ? Colors.green : isSelected ? (answered ? Colors.red : const Color(0xFF1565C0)) : Colors.grey.withOpacity(0.1)),
+                      child: Center(child: answered && isCorrect ? const Icon(Icons.check, size: 16, color: Colors.white)
+                        : answered && isSelected ? const Icon(Icons.close, size: 16, color: Colors.white)
+                        : Text(String.fromCharCode(65 + e.key), style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: isSelected ? Colors.white : Colors.black54)))),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(e.value, style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87))),
+                  ]),
+                ),
+              );
+            }),
+            if (answered && q['explanation'] != null) Container(
+              margin: const EdgeInsets.only(top: 8), padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Colors.blue.withOpacity(0.05), borderRadius: BorderRadius.circular(10)),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('💡', style: TextStyle(fontSize: 14)),
+                const SizedBox(width: 8),
+                Expanded(child: Text(q['explanation'], style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54, fontStyle: FontStyle.italic))),
+              ]),
+            ),
+          ]))),
+          Container(padding: const EdgeInsets.all(16), color: Colors.white, child: Row(children: [
+            if (_current > 0) OutlinedButton(onPressed: () => setState(() => _current--), child: const Text('Previous')),
+            const Spacer(),
+            if (_current < widget.questions.length - 1)
+              ElevatedButton(onPressed: () => setState(() => _current++), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1565C0)), child: const Text('Next', style: TextStyle(color: Colors.white)))
+            else
+              ElevatedButton(onPressed: _submit, style: ElevatedButton.styleFrom(backgroundColor: Colors.green), child: const Text('Submit', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+          ])),
+        ]),
+        // Confetti overlay
+        Align(alignment: Alignment.topCenter, child: ConfettiWidget(
+          confettiController: _confetti,
+          blastDirectionality: BlastDirectionality.explosive,
+          numberOfParticles: 15,
+          maxBlastForce: 15,
+          minBlastForce: 5,
+          gravity: 0.3,
+          colors: const [Colors.green, Colors.blue, Colors.orange, Colors.purple, Colors.pink],
+        )),
       ]),
     );
   }
@@ -99,7 +144,7 @@ class _TestScreenState extends State<TestScreen> {
   Widget _buildResult() {
     final score = _result!['score'] ?? 0;
     final total = _result!['total'] ?? 1;
-    final pct = _result!['percentage'] ?? 0;
+    final pct = (_result!['percentage'] ?? 0).toDouble();
     final answers = (_result!['answers'] as List?) ?? [];
 
     return Scaffold(

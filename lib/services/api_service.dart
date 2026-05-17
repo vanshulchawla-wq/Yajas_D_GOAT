@@ -65,4 +65,38 @@ class ApiService {
   static Future<void> removeBookmark(String questionId) async {
     await http.delete(Uri.parse('$baseUrl/bookmarks/$userId/$questionId')).timeout(const Duration(seconds: 10));
   }
+
+  static Future<List<Map<String, dynamic>>> getPastPapers({String? subject, int? year}) async {
+    try {
+      var url = '$baseUrl/past-papers?';
+      if (subject != null) url += 'subject=$subject&';
+      if (year != null) url += 'year=$year&';
+      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
+      if (res.statusCode == 200) return List<Map<String, dynamic>>.from(jsonDecode(res.body));
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> getPastPaperYears() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/past-papers/years')).timeout(const Duration(seconds: 30));
+      if (res.statusCode == 200) return jsonDecode(res.body);
+    } catch (_) {}
+    return {'years': [], 'subjects': []};
+  }
+
+  static Future<void> saveUploadedPaper({required String subject, required String title, required List<Map<String, dynamic>> questions}) async {
+    await http.post(Uri.parse('$baseUrl/save-uploaded-paper'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'user_id': userId, 'subject': subject, 'title': title, 'questions': questions}),
+    ).timeout(const Duration(seconds: 15));
+  }
+
+  static Future<List<Map<String, dynamic>>> getUploadedPapers() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/uploaded-papers/$userId')).timeout(const Duration(seconds: 30));
+      if (res.statusCode == 200) return List<Map<String, dynamic>>.from(jsonDecode(res.body));
+    } catch (_) {}
+    return [];
+  }
 }

@@ -6,6 +6,8 @@ import 'test_screen.dart';
 import 'history_screen.dart';
 import 'stats_screen.dart';
 import 'bookmarks_screen.dart';
+import 'past_papers_screen.dart';
+import 'upload_paper_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -98,6 +100,46 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text('Mixed subjects • New every week', style: GoogleFonts.poppins(fontSize: 11, color: Colors.white70)),
                 ])),
                 const Icon(Icons.play_circle_fill, color: Colors.white, size: 32),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Past Papers
+          GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PastPapersScreen())),
+            child: Container(
+              width: double.infinity, padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFFE65100), Color(0xFFBF360C)]),
+                borderRadius: BorderRadius.circular(16)),
+              child: Row(children: [
+                const Text('📄', style: TextStyle(fontSize: 28)),
+                const SizedBox(width: 14),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Past Board Papers', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  Text('Last 5 years • Real exam questions', style: GoogleFonts.poppins(fontSize: 11, color: Colors.white70)),
+                ])),
+                const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 20),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Upload Paper (OCR)
+          GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UploadPaperScreen())),
+            child: Container(
+              width: double.infinity, padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFF6A1B9A), Color(0xFF4A148C)]),
+                borderRadius: BorderRadius.circular(16)),
+              child: Row(children: [
+                const Text('📷', style: TextStyle(fontSize: 28)),
+                const SizedBox(width: 14),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Upload Paper (OCR)', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                  Text('Scan image • Auto-extract questions', style: GoogleFonts.poppins(fontSize: 11, color: Colors.white70)),
+                ])),
+                const Icon(Icons.camera_alt, color: Colors.white, size: 22),
               ]),
             ),
           ),
