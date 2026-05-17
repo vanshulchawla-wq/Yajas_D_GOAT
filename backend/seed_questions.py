@@ -5,7 +5,7 @@ Run this once to seed the database with questions:
 import requests
 import json
 
-API_URL = "https://ycexamprep.onrender.com"  # Update after deploy
+API_URL = "https://yajas-d-goat.onrender.com"  # Update after deploy
 
 questions = [
     # ═══════════════ MATHEMATICS ═══════════════

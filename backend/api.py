@@ -32,7 +32,7 @@ import hashlib
 app = FastAPI(title="YCExamPrep API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://vanshulchawla:Vanshul1234@cluster0.ixmgo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://elda:eldaonboard.streamlit.app@elda.wzcx5kq.mongodb.net/?appName=Elda")
 
 _client = None
 def get_db():
